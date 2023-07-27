@@ -1,0 +1,115 @@
+---
+title: "R Notebook"
+---
+
+```{r}
+library(rvest)
+library(RSelenium)
+library(dplyr)
+library(lubridate)
+```
+
+# 動態截 html＋靜態解析
+先去終端機打：java -jar selenium-server-standalone-3.141.59.jar 
+
+## 設定 selenium
+```{r}
+remDr <- remoteDriver(
+  remoteServerAddr = "localhost",
+  port = 4444,
+  browserName = "chrome")
+```
+
+## 先抓第一頁試試看
+```{r}
+#動態部分
+remDr$open()
+remDr$navigate("https://hahow.in/group")
+result<-remDr$getPageSource()[[1]]
+html<-read_html(result)
+name<-html_text(html_nodes(html,'.bmuUuF'))
+by<-html_text(html_nodes(html,'.cFHpbK .eXWVKq'))
+price<-html_text(html_nodes(html,'.cFHpbK .iOdYDX'))
+data<-data.frame(name=name,by=by,price=price)
+```
+
+## 迴圈（讓瀏覽器執行下一頁/或是用上一版的換網址也行）
+```{r}
+remDr$open()
+remDr$navigate("https://hahow.in/group")
+
+for(c in 1:41){
+  
+  
+  click<-remDr$findElement(using="xpath",'//*[@id="main-screen"]/section[1]/div[4]/ul/li[9]')
+  click$clickElement()
+}
+```
+
+#final
+```{r}
+remDr$open()
+remDr$navigate("https://hahow.in/group")
+data_all<-data.frame()
+
+Sys.sleep(2)
+result<-remDr$getPageSource()[[1]]
+html<-read_html(result)
+name<-html_text(html_nodes(html,'.bmuUuF'))
+by<-html_text(html_nodes(html,'.cFHpbK .eXWVKq'))
+price<-html_text(html_nodes(html,'.cFHpbK .iOdYDX'))
+data<-data.frame(name=name,by=by,price=price)
+data_all<-rbind(data_all,data)
+
+  click<-remDr$findElement(using="xpath",'//*[@id="main-screen"]/section[1]/div[4]/ul/li[9]')
+  click$clickElement()
+
+for(c in 1:40){
+  print(c)
+  Sys.sleep(2)
+  result<-remDr$getPageSource()[[1]]
+  html<-read_html(result)
+  name<-html_text(html_nodes(html,'.bmuUuF'))
+  by<-html_text(html_nodes(html,'.cFHpbK .eXWVKq'))
+  price<-html_text(html_nodes(html,'.cFHpbK .iOdYDX'))
+  data<-data.frame(name=name,by=by,price=price)
+  data_all<-rbind(data_all,data)
+
+  click<-remDr$findElement(using="xpath",'//*[@id="main-screen"]/section[1]/div[4]/ul/li[9]')
+  click$clickElement()
+}
+```
+
+# 測試
+```{r}
+remDr$open()
+remDr$navigate("https://hahow.in/group")
+data_all<-data.frame()
+
+Sys.sleep(2)
+result<-remDr$getPageSource()[[1]]
+html<-read_html(result)
+name<-html_text(html_nodes(html,'.bmuUuF'))
+by<-html_text(html_nodes(html,'.cFHpbK .eXWVKq'))
+price<-html_text(html_nodes(html,'.cFHpbK .iOdYDX'))
+data<-data.frame(name=name,by=by,price=price)
+data_all<-rbind(data_all,data)
+
+  click<-remDr$findElement(using="xpath",'//*[@id="main-screen"]/section[1]/div[4]/ul/li[9]')
+  click$clickElement()
+
+for(c in 1:3){
+  print(c)
+  Sys.sleep(2)
+  result<-remDr$getPageSource()[[1]]
+  html<-read_html(result)
+  name<-html_text(html_nodes(html,'.bmuUuF'))
+  by<-html_text(html_nodes(html,'.cFHpbK .eXWVKq'))
+  price<-html_text(html_nodes(html,'.cFHpbK .iOdYDX'))
+  data<-data.frame(name=name,by=by,price=price)
+  data_all<-rbind(data_all,data)
+  
+  click<-remDr$findElement(using="xpath",'//*[@id="main-screen"]/section[1]/div[4]/ul/li[9]')
+  click$clickElement()
+}
+```
