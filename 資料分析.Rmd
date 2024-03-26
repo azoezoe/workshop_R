@@ -1,0 +1,136 @@
+---
+title: "R Notebook"
+---
+
+### 請搭配示範資料 tsai.csv 使用
+
+# 安裝套件們（一台電腦安裝一次就好）
+```{r}
+install.packages("tidyr")
+install.packages("splitstackshape")
+install.packages("lubridate")
+install.packages("dplyr")
+install.packages("plyr")
+```
+
+# 載入套件們
+```{r}
+library(tidyr)
+library(splitstackshape)
+library(lubridate)
+library(dplyr)
+library(plyr)
+```
+
+### 更改欄位名
+```{r}
+colnames(tsai)[2]<-"行程"
+```
+
+### 擷取特定字數的字
+* 在文件 tsai 裡面新增一欄「時間」，內容是擷取 tsai 這份文件中「行程」欄位的第 2-7 個字
+```{r}
+tsai$時間<-substr(tsai$行程,2,7)
+```
+
+### 切割欄位
+* col= 要切的欄位 into=目標欄位  remove= FALSE 不要刪除原欄位
+* 缺點是如果內容中有其他 sep 符號，剩下的就會不見，可用 remove = FALSE輔助
+```{r}
+tsai1<-separate(tsai,col="行程",into=c("時間","其他行程"),sep="，")
+tsai2<-separate(tsai,col="行程",into=c("時間","其他行程","其他其他"),sep="，")
+tsai3<-separate(tsai,col="行程",into=c("時間","其他行程"),sep="，",remove=FALSE)
+```
+
+* 想要全部切
+```{r}
+tsai4<-cSplit(tsai,"行程","，","wide")
+```
+
+### 修改表格
+```{r}
+# 刪除欄位
+tsai3$其他行程<-NULL
+
+# 刪除第 11 列
+tsai3<-tsai3[-(11),]
+
+# 刪除 11、13 列
+tsai3<-tsai3[-c(11,13),]
+
+# 修改表格裡的值 檔案名稱[列,欄]<-"欲修改的內容"
+tsai3[1,1]<-"3月3日"
+
+# 新增一欄
+tsai3$add<-"tsai"
+```
+
+### 資料清理
+```{r}
+# 取代特定值
+tsai3$時間<-gsub("-","",tsai3$時間)
+
+# 組成特定字樣（將年、月、日組成同一個欄位）
+tsai3$完整日期<-paste0(tsai3$year,"年",tsai3$日期)
+
+# 日期套件
+tsai3$轉換格式的日期<-ymd(tsai3$完整日期)
+```
+
+### 篩選資料
+```{r}
+# 篩選完全符合的資料（時間是"16時")
+tsai16<-filter(tsai3,時間=="16時")
+
+# 剔除完全符合的資料（時間是"16時"的都刪掉)
+tsaino16<-filter(tsai3,時間!="16時")
+
+# 篩選有相關關鍵字的資料（行程中有「王美花」）
+tsai_wang<-filter(tsai3,grepl("王美花",tsai3$行程))
+
+# 剔除相關關鍵字的資料
+tsai_nowang<-filter(tsai3,!grepl("王美花",tsai3$行程))
+
+```
+
+### 條件判斷
+* ifelse(條件,符合條件的話填入什麼,不符合條件的話填入什麼)
+```{r}
+tsai3$參拜<-ifelse(grepl("參拜",tsai$行程),"宮廟","不是宮廟")
+tsai3$早上10點<-ifelse(tsai3$時間=="10時","y",NA)
+```
+
+### 合併資料
+```{r}
+colnames(holiday)[1]<-"轉換格式的日期"
+holiday$轉換格式的日期<-ymd(holiday$轉換格式的日期)
+tsai_holiday<-left_join(tsai3,holiday,by="轉換格式的日期")
+```
+
+### 計算
+* ddply(檔案名,.(以什麼為基準計算),summarize,新增欄位名=計算函式(計算哪個欄位,na.rm=TRUE))
+* 計算時可加上 na.rm=TRUE，代表不計算資料中的空值
+* 計算函式：
+length 次數
+sum 加總
+mean 平均值
+median 中位數
+min 挑選最小的
+max 挑選最大的
+
+```{r}
+# 計算每天的行程數
+tsai_count<-ddply(tsai3,.(轉換格式的日期),summarize,次數=length(轉換格式的日期))
+
+# 計算每年的行程數
+tsai_year<-ddply(tsai3,.(year),summarize,次數=length(year))
+
+# 加總每月的行程數
+tsai_count$month<-substr(tsai_count$轉換格式的日期,6,7)
+tsai_month<-ddply(tsai_count,.(month),summarize,加總次數=sum(次數))
+
+# 加上年的變項
+tsai_count$year<-substr(tsai_count$轉換格式的日期,1,4)
+tsai_month_year<-ddply(tsai_count,.(year,month),summarize,加總次數=sum(次數))
+```
+
