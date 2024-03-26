@@ -11,6 +11,7 @@ install.packages("splitstackshape")
 install.packages("lubridate")
 install.packages("dplyr")
 install.packages("plyr")
+install.packages("jiebaR")
 ```
 
 # 載入套件們
@@ -20,11 +21,14 @@ library(splitstackshape)
 library(lubridate)
 library(dplyr)
 library(plyr)
+library(jiebaR)
 ```
 
 ### 更改欄位名
 ```{r}
 colnames(tsai)[2]<-"行程"
+#colnames(檔案名)[第幾欄]<-"改成什麼名字"
+#寫註釋的方法
 ```
 
 ### 擷取特定字數的字
@@ -74,7 +78,7 @@ tsai3$時間<-gsub("-","",tsai3$時間)
 tsai3$完整日期<-paste0(tsai3$year,"年",tsai3$日期)
 
 # 日期套件
-tsai3$轉換格式的日期<-ymd(tsai3$完整日期)
+tsai3$轉換格式的日期<-ymd(tsai3$完整日期) #屬於 lubridata 套件
 ```
 
 ### 篩選資料
@@ -132,5 +136,14 @@ tsai_month<-ddply(tsai_count,.(month),summarize,加總次數=sum(次數))
 # 加上年的變項
 tsai_count$year<-substr(tsai_count$轉換格式的日期,1,4)
 tsai_month_year<-ddply(tsai_count,.(year,month),summarize,加總次數=sum(次數))
+```
+
+## 中文斷詞（使用 jiebaR 套件）
+```{r}
+seg=worker() #設定斷詞的「刀」
+tsai02<-tsai$X1 #指定文本所在欄位
+tsai02<-seg[tsai02] #斷詞
+tsai02<-table(tsai02) #統計
+tsai02<-data.frame(tsai02) #把結果組成表格
 ```
 
