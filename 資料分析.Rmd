@@ -147,3 +147,8 @@ tsai02<-table(tsai02) #統計
 tsai02<-data.frame(tsai02) #把結果組成表格
 ```
 
+## 存檔
+```{r}
+write.csv(tsai_month_year,"tsai_month_year.csv",row.names = FALSE)
+```
+
