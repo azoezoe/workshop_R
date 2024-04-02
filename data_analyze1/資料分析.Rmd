@@ -26,6 +26,7 @@ library(jiebaR)
 
 ### 更改欄位名
 ```{r}
+tsai2<-tsai
 colnames(tsai)[2]<-"行程"
 #colnames(檔案名)[第幾欄]<-"改成什麼名字"
 #寫註釋的方法
@@ -49,6 +50,8 @@ tsai3<-separate(tsai,col="行程",into=c("時間","其他行程"),sep="，",remo
 * 想要全部切
 ```{r}
 tsai4<-cSplit(tsai,"行程","，","wide")
+tsai5<-cSplit(tsai,"行程","，","long")
+
 ```
 
 ### 修改表格
@@ -78,7 +81,7 @@ tsai3$時間<-gsub("-","",tsai3$時間)
 tsai3$完整日期<-paste0(tsai3$year,"年",tsai3$日期)
 
 # 日期套件
-tsai3$轉換格式的日期<-ymd(tsai3$完整日期) #屬於 lubridata 套件
+tsai3$轉換格式的日期<-ymd(tsai3$完整日期) #屬於 lubridate 套件
 ```
 
 ### 篩選資料
@@ -100,7 +103,8 @@ tsai_nowang<-filter(tsai3,!grepl("王美花",tsai3$行程))
 ### 條件判斷
 * ifelse(條件,符合條件的話填入什麼,不符合條件的話填入什麼)
 ```{r}
-tsai3$參拜<-ifelse(grepl("參拜",tsai$行程),"宮廟","不是宮廟")
+tsai3$參拜<-ifelse(grepl("參拜",tsai3$行程),"宮廟","不是宮廟")
+#tsai3$參拜<-ifelse(條件,"符合的話寫入什麼","不符合的話寫入什麼")
 tsai3$早上10點<-ifelse(tsai3$時間=="10時","y",NA)
 ```
 
@@ -124,7 +128,7 @@ max 挑選最大的
 
 ```{r}
 # 計算每天的行程數
-tsai_count<-ddply(tsai3,.(轉換格式的日期),summarize,次數=length(轉換格式的日期))
+tsai_count<-ddply(tsai3,.(參拜),summarize,最近一次=max(轉換格式的日期))
 
 # 計算每年的行程數
 tsai_year<-ddply(tsai3,.(year),summarize,次數=length(year))
@@ -141,7 +145,7 @@ tsai_month_year<-ddply(tsai_count,.(year,month),summarize,加總次數=sum(次�
 ## 中文斷詞（使用 jiebaR 套件）
 ```{r}
 seg=worker() #設定斷詞的「刀」
-tsai02<-tsai$X1 #指定文本所在欄位
+tsai02<-tsai$行程 #指定文本所在欄位
 tsai02<-seg[tsai02] #斷詞
 tsai02<-table(tsai02) #統計
 tsai02<-data.frame(tsai02) #把結果組成表格
@@ -149,6 +153,6 @@ tsai02<-data.frame(tsai02) #把結果組成表格
 
 ## 存檔
 ```{r}
-write.csv(tsai_month_year,"tsai_month_year.csv",row.names = FALSE)
+write.csv(tsai02,"tsai_month_year123.csv",row.names = FALSE)
 ```
 
